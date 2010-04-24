@@ -8,7 +8,7 @@ build:
 	@${PYTHON} setup.py build
 
 test:
-	@${PYTHON} test_rbtree.py
+	@${PYTHON} setup.py test
 
 install:
 	@${PYTHON} setup.py install
@@ -18,6 +18,7 @@ dist:
 
 clean:
 	@find . -name "*.pyc" -exec rm {} \;
+	@find . -name "*.so" -exec rm {} \;
 	@find . -name "*~" -exec rm {} \;
 	@rm -rf src/rbtree.egg-info
 	@rm -rf build

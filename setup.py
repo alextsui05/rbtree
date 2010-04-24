@@ -15,7 +15,7 @@ setup(
                             libraries=[],
                             include_dirs=['./src', ])
                   ],
-    install_requires={'pyrex': '>= 0.9.8.5'},
+    test_suite="test_rbtree",
     zip_safe=False,
     author='Benjamin Saller',
     author_email='bcsaller@gmail.com',
