@@ -120,12 +120,12 @@ now when we do a delete the cursor will end up on the previous node.
 >>> i.delete()
 >>> assert i.item == (3,3)
 
-Using the iternodes interface and the .delete method is a somewhat
-rare and special case if you are simply treating the rbtree as an
-ordered dictionary. However, if you are using custom compare functions
-that will allow the same key into the tree more than once then its
-very useful to take an iterator to walk sets of similar keys which the
-dictionary interface will not be able to return. If this doesn't make
-sense to you ignore it :)
+Using the iternodes interface and the .delete method is a rare and
+special case if you are treating the rbtree as an ordered
+dictionary. However, if you are using custom compare functions that
+allows the same key into the tree more than once then its very useful
+to take an iterator and walk sets of similar keys which the dictionary
+interface will not be able to return. If this use-case doesn't make
+sense to you it continue using the rbtree as an ordered dict.
 
 

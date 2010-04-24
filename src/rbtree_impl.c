@@ -12,7 +12,7 @@
                              if (x != NULL)     \
                            { \
                                PyMem_Free(x); \
-                               x = NULL;   \
+                               x = NULL;  \
                            } \
                          }
 
@@ -44,8 +44,7 @@ rbtree_pycmp(PyObject *compare, PyObject *x, PyObject *y)
   if (res == NULL) return -1;
   if (!PyInt_Check(res)) {
     Py_DECREF(res);
-    PyErr_SetString(PyExc_TypeError,
-		    "comparison function must return int");
+    PyErr_SetString(PyExc_TypeError, "comparison function must return int");
     return -1;
   }
   i = PyInt_AsLong(res);
@@ -649,7 +648,7 @@ tree_predecessor(rbtree_t *T, rbtree_node_t *x) {
 #define ABS( a )     ( (a) < 0 ? -(a) : (a) )
 
 void rbtree_do_slice(rbtree_t *T, PyObject *start, PyObject *end, PyObject *stride, rbtree_t *new) {
-  // Return a new RBTree object built from the key slice. Because keys
+  // return a new rbtree object built from the key slice. Because keys
   // are ordered we slice on the actual keys and not their
   // index/offsets
   rbtree_node_t *sn, *en, *cursor;
