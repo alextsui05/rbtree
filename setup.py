@@ -6,7 +6,7 @@ from setuptools.extension import Extension
 
 setup(
     name="rbtree",
-    version="0.8.6",
+    version="0.8.7",
     packages=find_packages('src', exclude=["*.tests"]),
     package_dir={'': 'src'},
     package_data={'': ['*.txt'], },
