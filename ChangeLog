@@ -1,0 +1,6 @@
+2010-04-25  Benjamin Saller  <bcsaller@gmail.com>
+
+	* setup.py: added download url to metadata
+
+	* rbtree.pyx (__reversed__): added support for efficient revered
+

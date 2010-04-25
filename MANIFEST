@@ -1,3 +1,4 @@
+ChangeLog
 README.txt
 setup.py
 src/rbtree.pyx

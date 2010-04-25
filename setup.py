@@ -15,7 +15,7 @@ setup(
                             libraries=[],
                             include_dirs=['./src', ])
                   ],
-    test_suite="test_rbtree",
+    test_suite="tests.test_rbtree",
     zip_safe=False,
     author='Benjamin Saller',
     author_email='bcsaller@gmail.com',
