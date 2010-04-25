@@ -149,6 +149,11 @@ class Test(unittest.TestCase):
         assert r.min() == 0
         assert r.max() == 9
 
+    def test_reversed(self):
+        # invokes the __reversed__ method
+        r = rbtree(dict(zip(range(10), range(10))))
+        assert list(reversed(r)) == range(10)[::-1]
+
     def test_offset(self):
         r = rbtree(dict(zip(range(10), range(10))))
         # get keys by offset

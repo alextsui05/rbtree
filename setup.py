@@ -19,7 +19,9 @@ setup(
     zip_safe=False,
     author='Benjamin Saller',
     author_email='bcsaller@gmail.com',
-    description="""A red black tree with extended iterator support.""",
+    description="""A red black tree with extended iterator
+    support.""",
+    download_url="http://bitbucket.org/bcsaller/rbtree/",
     license='GPL 3',
     keywords="rbtree red-black tree data-structure",
     )

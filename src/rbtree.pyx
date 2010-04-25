@@ -304,6 +304,11 @@ cdef class rbtree:
         return v is not NULL
 
     def __iter__(self): return rbtreeIterator(self, KEYS)
+    def __reversed__(self):
+        i = rbtreeIterator(self, KEYS)
+        i.direction = BACKWARD
+        return i
+
     def iterkeys(self): return rbtreeIterator(self, KEYS)
     def itervalues(self): return rbtreeIterator(self, VALUES)
     def iteritems(self): return rbtreeIterator(self, ITEMS)
