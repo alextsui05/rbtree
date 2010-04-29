@@ -17,6 +17,7 @@ setup(
                   ],
     test_suite="tests.test_rbtree",
     zip_safe=False,
+    include_package_data=True,
     author='Benjamin Saller',
     author_email='bcsaller@gmail.com',
     description="""A red black tree with extended iterator
