@@ -46,6 +46,7 @@ int rbtree_init(rbtree_t *rbt);
 void rbtree_dealloc(rbtree_t *rbt);
 void rbtree_free(rbtree_t *rbt);
 void rbtree_set_compare(rbtree_t *T, PyObject *compare);
+PyObject *rbtree_get_compare(rbtree_t *T);
 
 // manipulation
 int rbtree_add(rbtree_t *rbt, PyObject *key, PyObject *value);

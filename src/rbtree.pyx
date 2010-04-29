@@ -60,6 +60,7 @@ cdef extern from "rbtree.h":
     void rbtree_validate(rbtree_t *T, int verbose)
 
     void rbtree_set_compare(rbtree_t *T, object compare)
+    object rbtree_get_compare(rbtree_t *T)
 
     ctypedef enum iter_direction:
         FORWARD = 1
@@ -70,22 +71,89 @@ VALUES = 2
 ITEMS  = 4
 NODES  = 8
 
+cdef class rbbase
 cdef class rbtree
+cdef class rbset
 
-cdef class rbtreeIterator:
-    cdef rbtree _T
+cdef class rbbase:
+    cdef rbtree_t *_tree
+
+    def __dealloc__(self):
+        rbtree_dealloc(self._tree)
+        rbtree_free(self._tree)
+
+    # Simple pickle support
+    def __getnewargs__(self, *args):
+        return ()
+
+    def __setstate__(self, state):
+        # if there was a compare function we need to try to pull it
+        # back in
+        if state['compare'] is not None:
+            rbtree_set_compare(self._tree, state['compare'])
+
+        self.update(state['data'])
+
+
+    def __len__(self):
+        return self._tree.ct
+
+    def __contains__(self, key):
+        cdef void *v
+        v = rbtree_get(self._tree,  key)
+        return v is not NULL
+
+    def has_key(self, key):
+        return key in self
+
+
+    def __iter__(self):
+        return rb_iterator(self, KEYS)
+
+    def __reversed__(self):
+        i = rb_iterator(self, KEYS)
+        i.direction = BACKWARD
+        return i
+
+    def copy(self):
+        ## XXX: check ref count handling
+        return self.__class__(self, cmp=rbtree_get_compare(self._tree))
+
+    cdef empty_copy(self):
+        return self.__class__(cmp=rbtree_get_compare(self._tree))
+
+    def clear(self):
+        rbtree_dealloc(self._tree)
+        rbtree_free(self._tree)
+        self._tree = rbtree_alloc()
+        rbtree_init(self._tree)
+
+    def min(self):
+        cdef rbtree_node_t *n
+        if len(self) == 0:
+            return None
+        return <object>(tree_min(self._tree, NULL).key)
+
+    def max(self):
+        cdef rbtree_node_t *n
+        if len(self) == 0:
+            return None
+        return <object>(tree_max(self._tree, NULL).key)
+
+
+cdef class rb_iterator:
+    cdef rbbase _T
     cdef rbtree_node_t *_iter
     cdef int _type
     cdef int _done
     cdef iter_direction _direction
 
-    def __cinit__(self, rbtree tree, int itype):
+    def __cinit__(self, rbbase tree, int itype):
         self._T = tree
         self._iter = NULL
         self._type = itype
         self._done = False
         self.direction = FORWARD
-
 
     property direction:
         def __get__(self):
@@ -113,7 +181,6 @@ cdef class rbtreeIterator:
     # iter protocol
     def __iter__(self):
         return self
-
 
     cdef step(self, iter_direction direction):
         if self._iter is NULL: self._position(direction)
@@ -190,9 +257,7 @@ cdef class rbtreeIterator:
         return not self._done
 
 
-cdef class rbtree:
-    cdef rbtree_t *_tree
-
+cdef class rbtree(rbbase):
     def __cinit__(self, mapping=None, cmp=None):
         self._tree = rbtree_alloc()
         rbtree_init(self._tree)
@@ -203,32 +268,10 @@ cdef class rbtree:
         if mapping:
             self.update(mapping)
 
-    def __dealloc__(self):
-        rbtree_dealloc(self._tree)
-        rbtree_free(self._tree)
-
-    # Simple pickle support
-    def __getnewargs__(self, *args):
-        return ()
-
-    def __getstate__(self):
-        d = dict(self)
-        return {'data' : d,
-                'compare' : <object> self._tree.compare,
-                }
-
-    def __setstate__(self, state):
-        # if there was a compare function we need to try to pull it
-        # back in
-        if state['compare'] is not None:
-            rbtree_set_compare(self._tree, state['compare'])
-
-        self.update(state['data'])
-
     # Compare support
     def __richcmp__(self, other, mode):
         if not isinstance(other, rbtree):
-            raise ValueError, "Can only test equality of two rbtrees"
+            raise ValueError, "Can only test equality of two %s" % self.__class__.__name__
         # We only support the eq check
         if mode != 2: return False
         if len(other) != len(self): return False
@@ -238,8 +281,13 @@ cdef class rbtree:
             if s.next().item != o.next().item: return False
         return True
 
-    def __len__(self):
-        return self._tree.ct
+    # pickle support
+    def __getstate__(self):
+        d = dict(self)
+        return {'data' : d,
+                'compare' : <object> self._tree.compare,
+                }
+
 
     def __setitem__(self, key, value):
         # calling hash on the key verifies that its not
@@ -293,26 +341,11 @@ cdef class rbtree:
         except KeyError:
             return default
 
-    def __contains__(self, key):
-        cdef void *v
-        v = rbtree_get(self._tree,  key)
-        return v is not NULL
 
-    def has_key(self, key):
-        cdef void *v
-        v = rbtree_get(self._tree,  key)
-        return v is not NULL
-
-    def __iter__(self): return rbtreeIterator(self, KEYS)
-    def __reversed__(self):
-        i = rbtreeIterator(self, KEYS)
-        i.direction = BACKWARD
-        return i
-
-    def iterkeys(self): return rbtreeIterator(self, KEYS)
-    def itervalues(self): return rbtreeIterator(self, VALUES)
-    def iteritems(self): return rbtreeIterator(self, ITEMS)
-    def iternodes(self): return rbtreeIterator(self, NODES)
+    def iterkeys(self): return rb_iterator(self, KEYS)
+    def itervalues(self): return rb_iterator(self, VALUES)
+    def iteritems(self): return rb_iterator(self, ITEMS)
+    def iternodes(self): return rb_iterator(self, NODES)
 
     def keys(self): return list(self.__iter__())
     def values(self): return list(self.itervalues())
@@ -337,15 +370,6 @@ cdef class rbtree:
         v = self[key]
         del self[key]
         return v
-
-    def copy(self):
-        return self.__class__(self)
-
-    def clear(self):
-        rbtree_dealloc(self._tree)
-        rbtree_free(self._tree)
-        self._tree = rbtree_alloc()
-        rbtree_init(self._tree)
 
     def setdefault(self, key, default):
         if key not in self:
@@ -372,26 +396,196 @@ cdef class rbtree:
 
         return <object>(n.key)
 
-    def min(self):
-        cdef rbtree_node_t *n
-        if len(self) == 0:
-            return None
-        return <object>(tree_min(self._tree, NULL).key)
-
-    def max(self):
-        cdef rbtree_node_t *n
-        if len(self) == 0:
-            return None
-        return <object>(tree_max(self._tree, NULL).key)
-
     def __repr__(self):
+        # represent the rbtree as a list of key/value tuples
         res = []
         for k,v in self.iteritems():
-            res.append("%r : %r" % (k,v))
+            res.append("(%r,  %r)" % (k,v))
         if len(res):
             res = ' ' + ', '.join(res)
         else:
             res = ''
-        return "<%s%s>" % (self.__class__.__name__, res)
+        return "[%s]" % (res)
 
 
+
+cdef class rbset(rbbase):
+    """set implemented to support ordering and basic set operations
+    using a rbtree for the underlying implementation.
+
+    With control over the compare function you can treat this either
+    as a set (unique membership) or a bag where you might add multiple
+    items of the same value.
+    """
+
+    # XXX: default cmp function is insertion order
+    def __cinit__(self, mapping=None, cmp=None):
+        self._tree = rbtree_alloc()
+        rbtree_init(self._tree)
+
+        if cmp is not None:
+            rbtree_set_compare(self._tree, cmp)
+
+        if mapping:
+            self.update(mapping)
+
+    # Compare support
+    def __richcmp__(self, other, mode):
+        if not isinstance(other, rbset):
+            raise ValueError, "Can only test equality of two rbset"
+        # We only support the eq check
+        if mode != 2: return False
+        if len(other) != len(self): return False
+        if self.symmetric_difference(other):
+            return False
+        return True
+
+    # pickle support
+    def __getstate__(self):
+        d = list(self)
+        return {'data' : d,
+                'compare' : <object> self._tree.compare,
+                }
+
+
+    # set interface
+    def intersection(self, other):
+        r = self.empty_copy()
+        for item in self:
+            if item in other:
+                r.add(item)
+        return r
+
+    def __and__(self, other):
+        return self.intersection(other)
+
+    def difference(self, other):
+        r = self.empty_copy()
+        for item in self:
+            if item not in other:
+                r.add(item)
+        return r
+
+    def __sub__(self, other):
+        return self.difference(other)
+
+    def symmetric_difference(self, other):
+        """Return a new set with elements in either the set or other
+        but not both."""
+        r = self.empty_copy()
+        for item in self:
+            if item not in other:
+                r.add(item)
+
+        for item in other:
+            if item not in self:
+                r.add(item)
+        return r
+
+    def __xor__(self, other):
+        return self.symmetric_difference(other)
+
+
+    def isdisjoint(self, other):
+        """Return True if the set has no elements in common with
+        other. Sets are disjoint if and only if their intersection is
+        the empty set."""
+        for item in self:
+            if item in other:
+                return False
+        return True
+
+    def issubset(self, other):
+        """Test whether every element in the set is in other."""
+        if len(self) > len(other):
+            return False
+        for item in self:
+            if item not in other:
+                return False
+        return True
+
+    def issuperset(self, other):
+        """Test whether every element in other is in the set."""
+        if len(other) > len(self):
+            return False
+        for item in other:
+            if item not in self:
+                return False
+        return True
+
+    def union(self, *iterables):
+        r = self.empty_copy()
+        iterables = [self] + list(iterables)
+        for iterable in iterables:
+            r.update(iterable)
+        return r
+
+    def __or__(self, iterable):
+        return self.union(iterable)
+
+    def __ior__(self, iterable):
+        self.update(iterable)
+        return self
+
+
+    def difference_update(self, *iterables):
+        for iterable in iterables:
+            for el in iterable:
+                self.discard(el)
+        return self
+
+    def __isub__(self, iterable):
+        return self.difference_update(iterable)
+
+    def intersection_update(self, *iterables):
+        """Update the set, keeping only elements found in it and all
+        others."""
+        for el in self:
+            for iterable in iterables:
+                if el not in iterable:
+                    self.discard(el)
+                    break
+        return self
+
+    def __iand__(self, iterable):
+        return self.intersection_update(iterable)
+
+    ## def symmetric_difference_update(self, *iterables):
+    ##     """Update the set, keeping only elements found in either set, but not in both."""
+    ##     for el in self:
+    ##         for iterable in iterables:
+    ##             if el in iterable: break
+
+
+    def add(self, item):
+        rbtree_add(self._tree, item, None)
+
+    def remove(self, item):
+        if item not in self:
+            raise KeyError(item)
+        rbtree_del(self._tree, item)
+
+    def discard(self, item):
+        if item in self:
+            rbtree_del(self._tree, item)
+
+
+    def update(self, sequence):
+        for el in sequence:
+            self.add(el)
+
+    def pop(self):
+        key = self.__iter__().next()
+        self.discard(key)
+        return key
+
+    def __repr__(self):
+        # represent the rbtree as a list of key/value tuples
+        if len(self):
+            res = []
+            for i in self:
+                res.append(repr(i))
+            res = ', '.join(res)
+        else:
+            res = ''
+        return "[%s]" % (res)

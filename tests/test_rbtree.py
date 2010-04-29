@@ -1,6 +1,6 @@
 import unittest
 import doctest
-from rbtree import rbtree
+from rbtree import rbtree, rbset
 from rbtree import (KEYS, VALUES, ITEMS, NODES)
 
 
@@ -121,9 +121,11 @@ class Test(unittest.TestCase):
 
     def test_clear(self):
         r = rbtree(dict(zip(range(10), range(1, 11))))
+        assert 5 in r
         r.clear()
         assert len(r) == 0
         assert 5 not in r
+        r = r.update(dict(zip(range(10), range(1, 11))))
 
     def test_setdefault(self):
         r = rbtree()
@@ -309,11 +311,23 @@ class Test(unittest.TestCase):
     def test_invalid_sequence(self):
         self.assertRaises(ValueError, rbtree, [['a', 'b', 'c'], ['c', 'd']])
 
+    def test_rbset(self):
+        a = rbset(range(10))
+        b = rbset(('a', 'b', 'c', 3, 4, 5))
+        assert set((3,4,5)) == set(a & b)
+        assert set(range(10) + ['a', 'b', 'c']) == set(a | b)
+        assert set([0, 1, 2, 6, 7, 8, 9, 'a', 'b', 'c']) == set(a^b)
+
+        # inplace operators
+        a |= b
+        a -= b
+        assert set(a) == set([0, 1, 2, 6, 7, 8, 9])
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(Test))
-    suite.addTest(doctest.DocFileSuite('README.txt'))
+    ##suite.addTest(doctest.DocFileSuite('README.txt'))
     runner = unittest.TextTestRunner(verbosity=1)
     runner.run(suite)
 
