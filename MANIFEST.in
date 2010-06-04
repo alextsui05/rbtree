@@ -1,0 +1,9 @@
+include ChangeLog
+include README.txt
+include setup.py
+include src/rbtree.pyx
+include src/rbtree_impl.c
+include src/rbtree.c
+include src/rbtree.h
+include ez_setup.py
+
