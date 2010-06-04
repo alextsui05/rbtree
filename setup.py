@@ -11,7 +11,7 @@ from setuptools.extension import Extension
 
 setup(
     name="rbtree",
-    version="0.8.8",
+    version="0.8.9",
     packages=find_packages('src', exclude=["*.tests", "ez_setup.py"]),
     package_dir={'': 'src'},
     package_data={'': ['*.txt'], },
