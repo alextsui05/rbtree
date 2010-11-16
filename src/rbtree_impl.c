@@ -57,10 +57,11 @@ static
 int
 rbtree_node_compare(PyObject *x, PyObject *y)
 {
+    int gt, lt;
     /* a three way compare that should work with whatever objects support */
-    int gt = PyObject_RichCompareBool(x, y, Py_GT);
+    gt = PyObject_RichCompareBool(x, y, Py_GT);
     if (gt == 1) return 1;
-    int lt = PyObject_RichCompareBool(x, y, Py_LT);
+    lt = PyObject_RichCompareBool(x, y, Py_LT);
     if (lt == 1)  return -1;
     return 0;
 }
@@ -621,16 +622,18 @@ rbtree_node_get (rbtree_t *T, PyObject *key)
 
 rbtree_node_t *
 tree_min(rbtree_t *T, rbtree_node_t *x) {
+    rbtree_node_t *n;
     if (x == NULL) x = T->root;
-    rbtree_node_t *n = __tree_min(T, x);
+    n = __tree_min(T, x);
     if (n == T->nil) n = NULL;
     return n;
 }
 
 rbtree_node_t *
 tree_max(rbtree_t *T, rbtree_node_t *x) {
+    rbtree_node_t *n;
     if (x == NULL) x = T->root;
-    rbtree_node_t *n = __tree_max(T, x);
+    n = __tree_max(T, x);
     if (n == T->nil) n = NULL;
     return n;
 }
