@@ -330,4 +330,3 @@ if __name__ == "__main__":
     ##suite.addTest(doctest.DocFileSuite('README.txt'))
     runner = unittest.TextTestRunner(verbosity=1)
     runner.run(suite)
-

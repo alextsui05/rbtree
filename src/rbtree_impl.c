@@ -288,15 +288,16 @@ static
 int
 __rb_insert (rbtree_t *T, PyObject *k, PyObject *v)
 {
-    rbtree_node_t *x = __tree_insert(T, k, v);
-    rbtree_node_t *y;
+    rbtree_node_t *x, *y;
 
+    Py_INCREF(k);
+    Py_INCREF(v);
+
+    x = __tree_insert(T, k, v);
     if (x ==  NULL) {
         return 0;
     }
 
-    Py_INCREF(k);
-    Py_INCREF(v);
 
 
     if (x)
@@ -482,6 +483,8 @@ __rb_del_node(rbtree_t *T, rbtree_node_t *z)
     DEL(y);
 
     T->ct--;
+    if (remainder == T->nil)
+        return NULL;
     return remainder;
 }
 
@@ -719,11 +722,7 @@ void rbtree_do_del_slice(rbtree_t *T, PyObject *start, PyObject *end,
         } else {
             cursor = __tree_successor(T, cursor);
         }
-        if (cursor == T->nil) break;
+        if (cursor == NULL || cursor == T->nil) break;
     }
 
 }
-
-
-
-

@@ -249,6 +249,10 @@ cdef class rb_iterator:
         if self.direction is BACKWARD:
             n = tree_predecessor(self._T._tree, n)
         self._iter = n
+        if self._iter is NULL:
+            self._done = True
+            raise StopIteration
+
 
     def __len__(self):
         return len(self._T)
