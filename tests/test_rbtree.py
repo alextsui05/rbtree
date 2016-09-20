@@ -142,6 +142,7 @@ class Test(unittest.TestCase):
         try:
             r = rbtree(dict(zip(range(10), range(10))),
                               cmp=badcmp)
+            print r
         except TypeError: pass
         else:
             raise TypeError("Allowed Cmp that returns string?")
